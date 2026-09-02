@@ -267,8 +267,8 @@ services:
     container_name: traefik
     restart: always
     ports:
-      - 8080:8080
-      - 8090:8090
+      - "127.0.0.1:8081:8080"
+      - "127.0.0.1:8091:8090"
     environment:
       CVAT_HOST: ${CVAT_HOST:-localhost}
       DJANGO_LOG_VIEWER_HOST: grafana
@@ -293,6 +293,7 @@ services:
       TRAEFIK_PROVIDERS_DOCKER_EXPOSEDBYDEFAULT: "false"
       TRAEFIK_PROVIDERS_DOCKER_NETWORK: cvat
       TRAEFIK_PROVIDERS_FILE_DIRECTORY: /etc/traefik/rules
+      TRAEFIK_ENTRYPOINTS_WEB_FORWARDEDHEADERS_INSECURE: "true"
     # Uncomment to get Traefik dashboard
     #   TRAEFIK_API_DASHBOARD: "true"
     #   TRAEFIK_ENTRYPOINTS_dashboard_ADDRESS: :8090
