@@ -85,7 +85,13 @@ services:
 
   cvat_server:
     container_name: cvat_server
-    image: cvat/server:${CVAT_VERSION:-dev}
+    image: cvat/server:${CVAT_VERSION:-dev}-custom
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+      args:
+        CVAT_VERSION: ${CVAT_VERSION:-dev}
+    pull_policy: build
     restart: always
     depends_on:
       <<: *backend-deps
@@ -117,7 +123,6 @@ services:
       - cvat_data:/home/django/data
       - cvat_keys:/home/django/keys
       - cvat_logs:/home/django/logs
-      - ./cvat/apps/engine/serializers.py:/opt/cvat/cvat/apps/engine/serializers.py:ro
     networks:
       cvat:
         aliases:

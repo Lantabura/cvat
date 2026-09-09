@@ -1,0 +1,8 @@
+ARG CVAT_VERSION=dev
+FROM cvat/server:${CVAT_VERSION}
+
+USER root
+COPY cvat/apps/engine/serializers.py /opt/cvat/cvat/apps/engine/serializers.py
+RUN python -m compileall -q /opt/cvat/cvat/apps/engine/serializers.py && \
+    chown 1000:1000 /opt/cvat/cvat/apps/engine/serializers.py
+USER 1000:1000
