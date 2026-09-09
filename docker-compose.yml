@@ -117,6 +117,7 @@ services:
       - cvat_data:/home/django/data
       - cvat_keys:/home/django/keys
       - cvat_logs:/home/django/logs
+      - ./cvat/apps/engine/serializers.py:/opt/cvat/cvat/apps/engine/serializers.py:ro
     networks:
       cvat:
         aliases:

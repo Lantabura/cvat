@@ -3525,9 +3525,35 @@ class ProjectWriteSerializer(serializers.ModelSerializer, OrgTransferableMixin):
         else:
             target_name = name
             request = self.context.get("request")
-            target_org = (
-                getattr(request, "iam_context", {}).get("organization") if request else None
-            )
+            target_org = None
+            if request:
+                iam_ctx = getattr(request, "iam_context", None)
+                if iam_ctx and isinstance(iam_ctx, dict):
+                    target_org = iam_ctx.get("organization")
+                elif iam_ctx:
+                    try:
+                        target_org = iam_ctx["organization"]
+                    except (KeyError, TypeError):
+                        pass
+
+                # Robust fallback: fetch organization directly from query params or headers
+                if target_org is None:
+                    org_slug = (
+                        request.query_params.get("org")
+                        if hasattr(request, "query_params")
+                        else getattr(request, "GET", {}).get("org")
+                    ) or (getattr(request, "headers", {}).get("X-Organization"))
+                    if org_slug:
+                        target_org = Organization.objects.filter(slug=org_slug).first()
+                    else:
+                        org_id = (
+                            request.query_params.get("org_id")
+                            if hasattr(request, "query_params")
+                            else getattr(request, "GET", {}).get("org_id")
+                        )
+                        if org_id:
+                            target_org = Organization.objects.filter(pk=org_id).first()
+
             target_owner = (
                 getattr(request, "user", None)
                 if request and getattr(request.user, "is_authenticated", False)
