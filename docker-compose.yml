@@ -259,7 +259,11 @@ services:
 
   cvat_ui:
     container_name: cvat_ui
-    image: cvat/ui:${CVAT_VERSION:-dev}
+    image: cvat/ui:${CVAT_VERSION:-dev}-custom
+    build:
+      context: .
+      dockerfile: Dockerfile.ui
+    pull_policy: build
     restart: always
     depends_on:
       - cvat_server

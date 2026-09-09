@@ -6,9 +6,45 @@
 
 .cvat-md-guide-control-wrapper {
     margin-top: $grid-unit-size;
+    width: 100%;
 
-    button {
-        margin-top: $grid-unit-size;
+    .cvat-md-guide-header {
+        display: flex;
+        align-items: center;
+        gap: $grid-unit-size;
+        margin-bottom: $grid-unit-size;
+    }
+
+    .cvat-md-guide-content {
+        padding: $grid-unit-size * 1.5;
+        background: #fafafa;
+        border: 1px solid $border-color-1;
+        border-radius: 6px;
+        max-height: 400px;
+        overflow-y: auto;
+        word-break: break-word;
+
+        p:last-child {
+            margin-bottom: 0;
+        }
+
+        pre {
+            background: #f0f0f0;
+            padding: $grid-unit-size;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+
+        code {
+            background: #f0f0f0;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+    }
+
+    .cvat-md-guide-empty {
+        color: $text-color-secondary;
+        font-style: italic;
     }
 }
 
