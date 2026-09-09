@@ -3502,9 +3502,73 @@ class ProjectWriteSerializer(serializers.ModelSerializer, OrgTransferableMixin):
         serializer = ProjectReadSerializer(instance, context=self.context)
         return serializer.data
 
+    def _validate_project_name(self, attrs: dict[str, Any]):
+        name = attrs.get("name")
+        if name is not None:
+            name = name.strip()
+            if not name:
+                raise serializers.ValidationError({"name": "Project name cannot be empty."})
+
+        if self.instance:
+            target_name = (name if name is not None else self.instance.name).strip()
+            if "organization_id" in attrs:
+                new_org_id = attrs["organization_id"]
+                target_org = (
+                    Organization.objects.filter(pk=new_org_id).first()
+                    if new_org_id is not None
+                    else None
+                )
+            else:
+                target_org = self.instance.organization
+            target_owner = self.instance.owner
+            exclude_pk = self.instance.pk
+        else:
+            target_name = name
+            request = self.context.get("request")
+            target_org = (
+                getattr(request, "iam_context", {}).get("organization") if request else None
+            )
+            target_owner = (
+                getattr(request, "user", None)
+                if request and getattr(request.user, "is_authenticated", False)
+                else None
+            )
+            exclude_pk = None
+
+        if not target_name:
+            return
+
+        qs = models.Project.objects.filter(name__iexact=target_name, organization=target_org)
+        if exclude_pk:
+            qs = qs.exclude(pk=exclude_pk)
+
+        if target_org:
+            if qs.exists():
+                org_label = getattr(target_org, "slug", str(target_org))
+                raise serializers.ValidationError(
+                    {
+                        "name": (
+                            f"A project named '{target_name}' already exists in organization "
+                            f"'{org_label}'. Please choose a unique name."
+                        )
+                    }
+                )
+        elif target_owner:
+            if qs.filter(owner=target_owner).exists():
+                raise serializers.ValidationError(
+                    {
+                        "name": (
+                            f"A project named '{target_name}' already exists in your personal "
+                            "workspace. Please choose a unique name."
+                        )
+                    }
+                )
+
     def validate(self, attrs):
         if self.instance and "organization_id" in attrs.keys():
             self._validate_org_transferring(attrs)
+
+        self._validate_project_name(attrs)
 
         return attrs
 

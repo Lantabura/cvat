@@ -453,6 +453,18 @@ class TestPostProjects:
         }
         self._test_create_project_201(user["username"], spec, org_id=org)
 
+    def test_cannot_create_duplicate_project_in_same_org(self, admin_user):
+        org = self._create_org(make_api_client(admin_user))
+        spec = {"name": "Unique Org Project"}
+        self._test_create_project_201(admin_user, spec, org_id=org)
+
+        with make_api_client(admin_user) as api_client:
+            _, response = api_client.projects_api.create(
+                spec, org_id=org, _parse_response=False, _check_status=False
+            )
+            assert response.status == HTTPStatus.BAD_REQUEST
+            assert "already exists in organization" in response.data.decode("utf-8")
+
     @classmethod
     def _create_user(cls, api_client: ApiClient, email: str) -> str:
         username = email.split("@", maxsplit=1)[0]
