@@ -29,25 +29,37 @@ function MdGuideControl(props: Props): JSX.Element {
 
     useEffect(() => {
         let isMounted = true;
-        const promise = instanceType === 'project' ? core.projects.get({ id }) : core.tasks.get({ id });
-        promise
-            .then((result) => result[0]?.guide())
-            .then((existingGuide: AnnotationGuide | null) => {
-                if (isMounted) {
-                    setGuide(existingGuide);
-                }
-            })
-            .catch(() => {
-                // Ignore error if guide does not exist
-            })
-            .finally(() => {
-                if (isMounted) {
-                    setFetching(false);
-                }
-            });
+        let timerId: ReturnType<typeof setTimeout> | null = null;
+        let pollAttempts = 0;
+        const maxAttempts = 3;
+
+        const loadGuide = () => {
+            const promise = instanceType === 'project' ? core.projects.get({ id }) : core.tasks.get({ id });
+            promise
+                .then((result) => result[0]?.guide())
+                .then((existingGuide: AnnotationGuide | null) => {
+                    if (!isMounted) return;
+                    if (existingGuide?.markdown) {
+                        setGuide(existingGuide);
+                        setFetching(false);
+                    } else if (pollAttempts < maxAttempts) {
+                        pollAttempts += 1;
+                        timerId = setTimeout(loadGuide, 1500);
+                    } else {
+                        setGuide(existingGuide);
+                        setFetching(false);
+                    }
+                })
+                .catch(() => {
+                    if (isMounted) setFetching(false);
+                });
+        };
+
+        loadGuide();
 
         return () => {
             isMounted = false;
+            if (timerId) clearTimeout(timerId);
         };
     }, [instanceType, id]);
 
